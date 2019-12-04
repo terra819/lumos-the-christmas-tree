@@ -118,7 +118,7 @@ if __name__ == '__main__':
     
     print('Defining HoG parameters ...')
     # HoG feature descriptor
-    hog = get_hog();
+    hog = get_hog()
 
     print('Calculating HoG descriptor for every image ... ')
     hog_descriptors = []

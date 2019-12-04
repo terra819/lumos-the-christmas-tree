@@ -3,6 +3,7 @@ import cv2
 import time
 import math
 
+#Settings
 DEQUE_BUFFER_SIZE = 40
 TRACE_THICKNESS = 4
 BGS_HISTORY_FRAMES = 200
@@ -19,38 +20,43 @@ CROPPED_IMG_MARGIN = 10      #pixels
 MAX_TRACE_SPEED = 150     #pixels/second (30p/0.2sec)
 deviceID = 0
 
+#Globals
 camera = cv2.VideoCapture(deviceID)
-_frameWidth = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
-_frameHeight = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
-_wandMoveTracingFrame = np.zeros((_frameHeight,_frameWidth,1), np.uint8) # (that is: height, width,numchannels)
-cameraFrame = np.zeros((_frameHeight,_frameWidth,1), np.uint8)
+frameWidth = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+frameHeight = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+wandMoveTracingFrame = np.zeros((frameHeight,frameWidth,1), np.uint8) # (that is: height, width,numchannels)
+cameraFrame = np.zeros((frameHeight,frameWidth,1), np.uint8)
+tracePoints = []
+blobKeypoints = []
+lastKeypointTime = time.time()
 
-_params = cv2.SimpleBlobDetector_Params()
-# Change thresholds
-_params.minThreshold = 150
-_params.maxThreshold = 255
+def get_blob_detector():
+    _params = cv2.SimpleBlobDetector_Params()
+    # Change thresholds
+    _params.minThreshold = 150
+    _params.maxThreshold = 255
 
-# Fliter by color
-_params.filterByColor = True
-_params.blobColor = 255
+    # Fliter by color
+    _params.filterByColor = True
+    _params.blobColor = 255
 
-# Filter by Area.
-_params.filterByArea = True
-_params.minArea = 10
-_params.maxArea = 40
+    # Filter by Area.
+    _params.filterByArea = True
+    _params.minArea = 10
+    _params.maxArea = 40
 
-# Filter by Circularity
-_params.filterByCircularity = True
-_params.minCircularity = 0.5
+    # Filter by Circularity
+    _params.filterByCircularity = True
+    _params.minCircularity = 0.5
 
-# Filter by Convexity
-_params.filterByConvexity = True
-_params.minConvexity = 0.5
+    # Filter by Convexity
+    _params.filterByConvexity = True
+    _params.minConvexity = 0.5
 
-# Filter by Inertia
-_params.filterByInertia = False
+    # Filter by Inertia
+    _params.filterByInertia = False
 
-_blobDetector = cv2.SimpleBlobDetector_create(_params)
+    return cv2.SimpleBlobDetector_create(_params)
 
 def get_hog() : 
     winSize = (64, 64)
@@ -70,10 +76,6 @@ def get_hog() :
 
     return hog
 
-_tracePoints = []
-_blobKeypoints = []
-_lastKeypointTime = time.time()
-
 def _wandDetect(frameData):
     global cameraFrame
     cameraFrame = frameData         
@@ -88,60 +90,60 @@ def _wandDetect(frameData):
     return keypoints
 
 def getWandTrace(frameData):
-    global _lastKeypointTime, _tracePoints,_blobKeypoints
-    _blobKeypoints = _wandDetect(frameData)
+    global lastKeypointTime, tracePoints,blobKeypoints
+    blobKeypoints = _wandDetect(frameData)
     
     #Add keypoints to deque. For now, take only the first found keypoint
-    if(len(_blobKeypoints) > 0 ):
+    if(len(blobKeypoints) > 0 ):
         currentKeypointTime = time.time()
 
-        if (len(_tracePoints) > 0):
-            elapsed = currentKeypointTime - _lastKeypointTime
-            pt1 = (_tracePoints[len(_tracePoints) - 1])
-            pt2 = (_blobKeypoints[0])
+        if (len(tracePoints) > 0):
+            elapsed = currentKeypointTime - lastKeypointTime
+            pt1 = (tracePoints[len(tracePoints) - 1])
+            pt2 = (blobKeypoints[0])
             distance = _distance(pt1,pt2)
             speed = distance / elapsed
             if (speed >= MAX_TRACE_SPEED):
-                return _wandMoveTracingFrame
-            if (len(_tracePoints) >= DEQUE_BUFFER_SIZE):
-                _tracePoints.pop(0)
+                return wandMoveTracingFrame
+            if (len(tracePoints) >= DEQUE_BUFFER_SIZE):
+                tracePoints.pop(0)
 
-            _tracePoints.append(_blobKeypoints[0])
-            cv2.line(_wandMoveTracingFrame, (int(pt1.pt[0]), int(pt1.pt[1])), (int(pt2.pt[0]), int(pt2.pt[1])), 255, TRACE_THICKNESS)
+            tracePoints.append(blobKeypoints[0])
+            cv2.line(wandMoveTracingFrame, (int(pt1.pt[0]), int(pt1.pt[1])), (int(pt2.pt[0]), int(pt2.pt[1])), 255, TRACE_THICKNESS)
         else:
-            _lastKeypointTime = currentKeypointTime
-            _tracePoints.append(_blobKeypoints[0])
+            lastKeypointTime = currentKeypointTime
+            tracePoints.append(blobKeypoints[0])
     
-    return _wandMoveTracingFrame
+    return wandMoveTracingFrame
 
 def _distance(pt1, pt2):
     return math.sqrt((pt1.pt[0] - pt2.pt[0])*(pt1.pt[0] - pt2.pt[0]) + (pt1.pt[1] - pt2.pt[1])*(pt1.pt[1] - pt2.pt[1]))
 
 def wandVisible():
-    global _blobKeypoints
-    if(len(_blobKeypoints) == 0):
+    global blobKeypoints
+    if(len(blobKeypoints) == 0):
         return False
     return True
 
 def checkTraceValidity():
-    global _traceUpperCorner, _traceLowerCorner, _blobKeypoints,_tracePoints,_traceUpperCorner,_traceLowerCorner
-    if (len(_blobKeypoints) == 0):    
+    global _traceUpperCorner, _traceLowerCorner, blobKeypoints,tracePoints,_traceUpperCorner,_traceLowerCorner
+    if (len(blobKeypoints) == 0):    
         currentKeypointTime = time.time()
-        elapsed = currentKeypointTime - _lastKeypointTime
+        elapsed = currentKeypointTime - lastKeypointTime
         if (elapsed < 5.0):
             return False
         
-        if (len(_tracePoints) > DEQUE_BUFFER_SIZE - 5):        
-            _traceUpperCorner = (_frameWidth, _frameHeight)
+        if (len(tracePoints) > DEQUE_BUFFER_SIZE - 5):        
+            _traceUpperCorner = (frameWidth, frameHeight)
             _traceLowerCorner = (0, 0)
 
             #Draw a trace by connecting all the keypoints stored in the deque
             #Also update lower and upper bounds of the trace
-            for i in range(len(_tracePoints)):           
-                if (_tracePoints[i].size == -99.0):
+            for i in range(len(tracePoints)):           
+                if (tracePoints[i].size == -99.0):
                     continue
-                pt1 = (_tracePoints[i - 1].pt[0], _tracePoints[i - 1].pt[1])
-                # pt2 = (_tracePoints[i].pt[0], _tracePoints[i].pt[1])
+                pt1 = (tracePoints[i - 1].pt[0], tracePoints[i - 1].pt[1])
+                # pt2 = (tracePoints[i].pt[0], tracePoints[i].pt[1])
 
                 #Min x,y = traceUpperCorner points
                 #Max x,y = traceLowerCorner points
@@ -166,11 +168,11 @@ def checkTraceValidity():
     return False
 
 def eraseTrace():
-    global _wandMoveTracingFrame, _tracePoints
+    global wandMoveTracingFrame, tracePoints
     #Erase existing trace
-    _wandMoveTracingFrame = np.zeros((_frameHeight,_frameWidth,1), np.uint8)
+    wandMoveTracingFrame = np.zeros((frameHeight,frameWidth,1), np.uint8)
     #Empty corresponding tracePoints
-    _tracePoints = []
+    tracePoints = []
         
 def _cropSaveTrace():
     global _traceUpperCorner, _traceLowerCorner
@@ -184,15 +186,15 @@ def _cropSaveTrace():
     else:
         _traceUpperCorner = (_traceUpperCorner[0], 0)
 
-    if (_traceLowerCorner[0] < _frameWidth - CROPPED_IMG_MARGIN):
+    if (_traceLowerCorner[0] < frameWidth - CROPPED_IMG_MARGIN):
         _traceLowerCorner = (_traceLowerCorner[0] + CROPPED_IMG_MARGIN, _traceLowerCorner[1])
     else:
-        _traceLowerCorner = (_frameWidth, _traceLowerCorner[1])
+        _traceLowerCorner = (frameWidth, _traceLowerCorner[1])
         
-    if (_traceLowerCorner[1] < _frameHeight - CROPPED_IMG_MARGIN):
+    if (_traceLowerCorner[1] < frameHeight - CROPPED_IMG_MARGIN):
         _traceLowerCorner = (_traceLowerCorner[0], _traceLowerCorner[1] + CROPPED_IMG_MARGIN)
     else:
-        _traceLowerCorner = (_traceLowerCorner[0], _frameHeight)
+        _traceLowerCorner = (_traceLowerCorner[0], frameHeight)
 
 
     traceWidth = int(_traceLowerCorner[0] - _traceUpperCorner[0])
@@ -206,7 +208,7 @@ def _cropSaveTrace():
         _sizewidth = int(TRAINER_IMAGE_WIN_SIZE)
         _sizeheight = int(traceHeight * TRAINER_IMAGE_WIN_SIZE / traceWidth)
 
-    clone = _wandMoveTracingFrame.copy()
+    clone = wandMoveTracingFrame.copy()
     crop = clone[int(_traceUpperCorner[1]):int(_traceLowerCorner[1]), int(_traceUpperCorner[0]):int(_traceLowerCorner[0])]
     resizedCroppedTrace = cv2.resize(crop, (_sizewidth, _sizeheight))
     _finalTraceCell = np.zeros((TRAINER_IMAGE_WIN_SIZE, TRAINER_IMAGE_WIN_SIZE,1), np.uint8)
@@ -229,114 +231,9 @@ def recognizeSpell():
     prediction = svm.predict(descriptors[None,:])[1].ravel()
     print(prediction)
     return prediction
-
-def _ConvertVectortoMatrix(inHOG):
-    descriptorMatrix = np.zeros((1, inHOG.shape[1]),np.float32)
-    for i in range(inHOG.shape[0]):
-        for j in range(inHOG.shape[1]):
-            descriptorMatrix[(i,j)] = inHOG[(i,j)]
-        
-def spellRecognitionTrainer():
-    trainCells = []
-    trainLabels = []
-    _loadTrainLabel(GESTURE_TRAINER_IMAGE, trainCells, trainLabels)
-    print("trainCells")
-    print(trainCells)
-    print("trainLabels")
-    print(trainLabels)
-    deskewedTrainCells = []
-    _CreateDeskewedTrain(deskewedTrainCells, trainCells)
-    print("deskewedTrainCells")
-    print(deskewedTrainCells)
-    print("trainCells")
-    print(trainCells)
-
-    trainHOG =[]
-    testHOG = []
-    _CreateTrainHOG(trainHOG, deskewedTrainCells)
-    print("trainHOG")
-    print(trainHOG)
-    print("deskewedTrainCells")
-    print(deskewedTrainCells)
-
-    descriptor_size = len(trainHOG[0])
-    print("descriptor_size")
-    print(descriptor_size)
-
-    trainMat(len(trainHOG), descriptor_size, np.float32)
-    print("trainMat")
-    print(trainMat)
     
-    _ConvertVectortoMatrix(trainHOG, trainMat)
-    print("_ConvertVectortoMatrix")
-    print(_ConvertVectortoMatrix)
-
-    _SVMtrain(trainMat, trainLabels)
-    print("_SVMtrain")
-    print(_SVMtrain)
-                    
-def _loadTrainLabel(pathName, trainCells, trainLabels):
-    img = cv2.imread(pathName, 0)
-    cv2.imwrite("img.png", imgopencv)
-    ImgCount = 0
-    i = 0
-    while i < img.shape[0]:
-        j = 0
-        while j < img.shape[1]:
-            digitImg = (img.shape[1](j, j + TRAINER_IMAGE_WIN_SIZE).shape[0](i, i + TRAINER_IMAGE_WIN_SIZE)).copy()
-            trainCells.append(digitImg)
-            ImgCount = ImgCount + 1
-            j = j + TRAINER_IMAGE_WIN_SIZE
-        i = i + TRAINER_IMAGE_WIN_SIZE          
-
-    print("Image Count : ")
-    print(ImgCount)
-    digitClassNumber = 0
-
-    for Z in range(ImgCount):
-            if (z % NO_OF_IMAGES_PER_ELEMENT == 0 and z != 0):
-                    digitClassNumber = digitClassNumber + 1                    
-            trainLabels.append(digitClassNumber)
-            
-def _CreateDeskewedTrain(deskewedTrainCells, trainCells):
-    for i in range(len(trainCells)):
-        deskewedImg = _deskew(trainCells[i])
-        deskewedTrainCells.append(deskewedImg)
-
-def _CreateTrainHOG(trainHOG, deskewedtrainCells):
-    for y in range(len(deskewedtrainCells)):
-        descriptors = _hog.compute(deskewedtrainCells[y])
-        trainHOG.append(descriptors)
-
-def _getSVMParams(svm):
-    print("Kernel type     : ")
-    print(svm.getKernelType())
-    print("Type            : ")
-    print(svm.getType())
-    print("C               : ")
-    print(svm.getC())
-    print("Degree          : ")
-    print(svm.getDegree())
-    print("Nu              : ")
-    print(svm.getNu())
-    print("Gamma           : ")
-    print(svm.getGamma())
-
-def _SVMtrain(trainMat, trainLabels):
-    svm = SVM.create()
-    svm.setGamma(0.50625)
-    svm.setC(12.5)
-    svm.setKernel(SVM.RBF)
-    svm.setType(SVM.C_SVC)
-    td = TrainData.create(trainMat, ROW_SAMPLE, trainLabels)
-    svm.train(td)
-    svm.save("model4[1]ml")
-    _getSVMParams(svm)
-        
 def _deskew(img):
-    SZ = 64
-#     affineFlags = cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR
-    
+    SZ = 64    
     m = cv2.moments(img)
     if abs(m['mu02']) < 1e-2:
         return img.copy()
@@ -345,6 +242,7 @@ def _deskew(img):
     img = cv2.warpAffine(img, M, (SZ, SZ), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
     return img
 
+_blobDetector = get_blob_detector()
 
 while(True):
     # Capture frame-by-frame
@@ -375,16 +273,14 @@ while(True):
             eraseTrace()
        
     waitKey = cv2.waitKey(10)
-    if waitKey == ord('y'):
-        print("spelltraining")
-        if ENABLE_SPELL_TRAINING:
-            spellRecognitionTrainer()
         
     if waitKey == ord('s'):
         print("savemage")
         if ENABLE_SAVE_IMAGE:
-            fileName = "Image" + time.time() + ".png"
-            cv2.imwrite(fileName, wandTraceFrame)
+            fileName = "/samples/Image" + time.time() + ".png"
+            finalTrace = _cropSaveTrace()
+            deskewedTrace = _deskew(finalTrace)
+            cv2.imwrite(fileName, deskewedTrace)
             fileNum = fileNum + 1
             eraseTrace()
             
