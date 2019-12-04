@@ -170,6 +170,7 @@ def eraseTrace():
     tracePoints = []
         
 def _cropSaveTrace():
+    #todo: this is cropping too closely, try to get some padding in there
     global _traceUpperCorner, _traceLowerCorner
     if (_traceUpperCorner[0] > CROPPED_IMG_MARGIN):
         _traceUpperCorner = (_traceUpperCorner[0] - CROPPED_IMG_MARGIN, _traceUpperCorner[1])
@@ -270,21 +271,25 @@ while(True):
     waitKey = cv2.waitKey(10)
         
     if waitKey == ord('s'):
-        print("savemage")
+        print("Saving Image")
         if ENABLE_SAVE_IMAGE:
-            fileName = "/samples/Image" + time.time() + ".png"
-            finalTrace = _cropSaveTrace()
-            deskewedTrace = _deskew(finalTrace)
-            cv2.imwrite(fileName, deskewedTrace)
+            if (checkTraceValidity()):
+                fileName = "Image" + str(time.time()) + ".png"
+                finalTrace = _cropSaveTrace()
+                deskewedTrace = _deskew(finalTrace)
+                cv2.imwrite(fileName, deskewedTrace)
+                print("Image saved as " +fileName)
+            else:
+                print("Unable to save image, not valid trace")
             eraseTrace()
             
     if waitKey == ord('c'):
-        print("clear image")
+        print("Clear Image")
         if ENABLE_SAVE_IMAGE:
             eraseTrace()
         
     if waitKey == ord('q'):
-        print("quit")
+        print("Quitting")
         break
 
 camera.release()
