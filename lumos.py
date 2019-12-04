@@ -12,15 +12,9 @@ TRAINED_SPELL_MODEL = "spellsModel.yml"
 TRAINER_IMAGE_WIN_SIZE = 64
 GESTURE_TRAINER_IMAGE = "gesuretrainer.jpg"  
 NO_OF_IMAGES_PER_ELEMENT = 20
-fileNum = 0  
-ESC_KEY = 27
-SPACE_KEY = 32
-ALT_KEY = 18
+fileNum = 0
 windowName = "Wand Trace Window"
-MIN_0_TRACE_AREA = 7600    #for M
-MIN_1_TRACE_AREA = 30000   #for 0
-MIN_2_TRACE_AREA = 12500   #for '4'
-MIN_3_TRACE_AREA = 23000   #for ~
+MINTRACE_AREA = 7600
 CROPPED_IMG_MARGIN = 10      #pixels
 MAX_TRACE_SPEED = 150     #pixels/second (30p/0.2sec)
 deviceID = 0
@@ -30,7 +24,6 @@ _frameWidth = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
 _frameHeight = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
 _wandMoveTracingFrame = np.zeros((_frameHeight,_frameWidth,1), np.uint8) # (that is: height, width,numchannels)
 cameraFrame = np.zeros((_frameHeight,_frameWidth,1), np.uint8)
-_pMOG2 = cv2.bgsegm.createBackgroundSubtractorMOG(BGS_HISTORY_FRAMES)
 
 _params = cv2.SimpleBlobDetector_Params()
 # Change thresholds
@@ -76,40 +69,21 @@ def get_hog() :
     hog = cv2.HOGDescriptor(winSize,blockSize,blockStride,cellSize,nbins,derivAperture,winSigma,histogramNormType,L2HysThreshold,gammaCorrection,nlevels, signedGradient)
 
     return hog
-    affine_flags = cv2.WARP_INVERSE_MAP|cv2.INTER_LINEAR
-
-# _hog = cv2.HOGDescriptor(
-#     (64, 64), #winSize  50 x 50
-#     (32, 32), #blocksize 32 x 32
-#     (16, 16), #blockStride, 16 x 16
-#     (16, 16), #cellSize, 16 x 16
-#     9, #nbins,
-#     1, #derivAper,
-#     -1, #winSigma,
-#     0, #histogramNormType,
-#     0.2, #L2HysThresh,
-#     0,#gammal correction,
-#     64,#nlevels=64
-#     1)
 
 _tracePoints = []
 _blobKeypoints = []
 _lastKeypointTime = time.time()
-    #return
 
 def _wandDetect(frameData):
     global cameraFrame
-
-    #Background Elimination
-#     bgSubtractedFrame = _pMOG2.apply(frameData);
     cameraFrame = frameData         
     
     # Detect blobs
     keypoints = _blobDetector.detect(cameraFrame)
 
     # Show keypoints
-    im_with_keypoints = cv2.drawKeypoints(cameraFrame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    cv2.imshow("Debug Window", im_with_keypoints)
+    # im_with_keypoints = cv2.drawKeypoints(cameraFrame, keypoints, np.array([]), (0,0,255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    # cv2.imshow("Debug Window", im_with_keypoints)
     
     return keypoints
 
@@ -123,19 +97,11 @@ def getWandTrace(frameData):
 
         if (len(_tracePoints) > 0):
             elapsed = currentKeypointTime - _lastKeypointTime
-#             print("elapsed")
-#             print(elapsed)
             pt1 = (_tracePoints[len(_tracePoints) - 1])
             pt2 = (_blobKeypoints[0])
             distance = _distance(pt1,pt2)
-#             print("distance")
-#             print(distance)
             speed = distance / elapsed
-#             print("speed")
-#             print(speed)
             if (speed >= MAX_TRACE_SPEED):
-#                 print("too fast")
-#                 print(speed)
                 return _wandMoveTracingFrame
             if (len(_tracePoints) >= DEQUE_BUFFER_SIZE):
                 _tracePoints.pop(0)
@@ -175,7 +141,7 @@ def checkTraceValidity():
                 if (_tracePoints[i].size == -99.0):
                     continue
                 pt1 = (_tracePoints[i - 1].pt[0], _tracePoints[i - 1].pt[1])
-                pt2 = (_tracePoints[i].pt[0], _tracePoints[i].pt[1])
+                # pt2 = (_tracePoints[i].pt[0], _tracePoints[i].pt[1])
 
                 #Min x,y = traceUpperCorner points
                 #Max x,y = traceLowerCorner points
@@ -191,7 +157,7 @@ def checkTraceValidity():
                     
             traceArea = (_traceLowerCorner[0] - _traceUpperCorner[0]) * (_traceLowerCorner[1] - _traceUpperCorner[1])
             
-            if (traceArea > MIN_0_TRACE_AREA):
+            if (traceArea > MINTRACE_AREA):
                 return True
         
         #It's been over five seconds since the last keypoint and trace isn't valid
@@ -247,77 +213,20 @@ def _cropSaveTrace():
     for i in range(resizedCroppedTrace.shape[0]):
         for j in range(resizedCroppedTrace.shape[1]):
             _finalTraceCell[(i,j)] = resizedCroppedTrace[(i,j)]
-#     cv2.imshow("_finalTraceCell window", _finalTraceCell)
-#     cv2.imwrite("spellTraceCell.png", _finalTraceCell)
     return _finalTraceCell
 
 def recognizeSpell():
-    print("recognizeSpell")
     finalTrace = _cropSaveTrace()
-    cv2.imwrite("finalTrace.png", finalTrace)
-#     finalTrace = cv2.imread("Untitled.png", 0)
-#     print(finalTrace.shape)
-#     print(finalTrace.dtype)
-#     print("finalTrace")
     deskewedTrace = _deskew(finalTrace)
-    print("deskewedTrace")
-    cv2.imwrite("deskewedTrace.png", deskewedTrace)
-#     cv2.imshow("finalTrace window", finalTrace)
-#     cv2.imshow("deskewedTrace window", deskewedTrace)
-#     cv2.imshow("finalTrace window", finalTrace)
-#     time.sleep(50)
-#     print("deskewedTrace")
-#     print(deskewedTrace)
-#     hog = cv2.HOGDescriptor()
     hog = get_hog()
-    print("get_hog")
     descriptors = hog.compute(deskewedTrace)
-    print("hog.compute(deskewedTrace)")
-#     descriptors = np.float32(descriptors)
     descriptors = np.squeeze(descriptors)
-    print("descriptors")
-#     print(descriptors.dtype)
-#     print(descriptors.shape)
-#     cv2.imwrite("descriptors.png", descriptors)
-# #     print("descriptors")
-#     descriptorMatrix = _ConvertVectortoMatrix(descriptors)
-#     print("descriptorMatrix")
-
-#     print(testimg.shape)
-#     #convert 2d to 1d 
-#     testMat = testimg.copy().reshape(-1)
-#     print(testMat.shape)
-#     testMat.convertTo(testMat, CV_32F)
-#     res = np.float32(testMat)
-#     print("_ConvertVectortoMatrix")
-#     print(descriptorMatrix.shape)
     svm = cv2.ml.SVM_load(TRAINED_SPELL_MODEL)
     svm.setGamma(0.50625)
     svm.setC(12.5)
     svm.setKernel(cv2.ml.SVM_RBF)
     svm.setType(cv2.ml.SVM_C_SVC)
-    print("svm")
-#     image = np.float32(cv2.imread("spellTraceCell.png", 0))
-#     print(svm.predict(np.ravel(image)[None, :]))
-#     print("svm.var_count")
-#     print(svm.var_count)
-#     testImg = np.float(cv2.imread("spellTraceCell.png",0))
-#     print(svm.predict(np.ravel(finalTrace)))
-#     print(svm.predict(np.ravel(finalTrace)[None, :]))
-#     cv2.imwrite("finalTrace" + str(time.time()) + ".png", finalTrace)
-#     cv2.imwrite("descriptorMatrix" + str(time.time()) + ".png", res)
-#     print(res.shape)
-#     print("descriptors")
-#     print(descriptors)
-#     print("descriptors.shape[1]")
-#     print(descriptors.shape[1])
-#     print("svm.getVarCount()")
-#     print(svm.getVarCount())
-#     cv2.imwrite("descriptors.png", descriptors)
     prediction = svm.predict(descriptors[None,:])[1].ravel()
-    print("prediction")
-    #cv2.error: OpenCV(4.1.1) /home/pi/opencv-python/opencv/modules/ml/src/svm.cpp:2011: error: (-215:Assertion failed) samples.cols == var_count && samples.type() == CV_32F in function 'predict'
-
     print(prediction)
     return prediction
 
@@ -354,7 +263,7 @@ def spellRecognitionTrainer():
     print("descriptor_size")
     print(descriptor_size)
 
-    trainMat(len(trainHOG), descriptor_size, CV_32FC1)
+    trainMat(len(trainHOG), descriptor_size, np.float32)
     print("trainMat")
     print(trainMat)
     
@@ -474,7 +383,7 @@ while(True):
     if waitKey == ord('s'):
         print("savemage")
         if ENABLE_SAVE_IMAGE:
-            fileName = "Image" + str(fileNum) + ".png"
+            fileName = "Image" + time.time() + ".png"
             cv2.imwrite(fileName, wandTraceFrame)
             fileNum = fileNum + 1
             eraseTrace()
