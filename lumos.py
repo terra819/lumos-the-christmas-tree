@@ -6,14 +6,9 @@ import math
 #Settings
 DEQUE_BUFFER_SIZE = 40
 TRACE_THICKNESS = 4
-BGS_HISTORY_FRAMES = 200
 ENABLE_SAVE_IMAGE = False
-ENABLE_SPELL_TRAINING  = False
 TRAINED_SPELL_MODEL = "spellsModel.yml"
 TRAINER_IMAGE_WIN_SIZE = 64
-GESTURE_TRAINER_IMAGE = "gesuretrainer.jpg"  
-NO_OF_IMAGES_PER_ELEMENT = 20
-fileNum = 0
 windowName = "Wand Trace Window"
 MINTRACE_AREA = 7600
 CROPPED_IMG_MARGIN = 10      #pixels
@@ -253,7 +248,7 @@ while(True):
     wandTraceFrame = getWandTrace(gray)
     cv2.imshow(windowName, wandTraceFrame)
     
-    if not ENABLE_SPELL_TRAINING and not ENABLE_SAVE_IMAGE:
+    if not ENABLE_SAVE_IMAGE:
         if (checkTraceValidity()):
             print("Trace valid for spell rcognition")
             spell = recognizeSpell()
@@ -281,7 +276,6 @@ while(True):
             finalTrace = _cropSaveTrace()
             deskewedTrace = _deskew(finalTrace)
             cv2.imwrite(fileName, deskewedTrace)
-            fileNum = fileNum + 1
             eraseTrace()
             
     if waitKey == ord('c'):
