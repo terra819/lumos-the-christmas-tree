@@ -101,51 +101,46 @@ def get_hog() :
 
 
 
-if __name__ == '__main__':
+print('Loading digits from gesuretrainer.jpg ... ')
+# Load data.
+digits, labels = load_digits('gesuretrainer.jpg')
 
-    print('Loading digits from gesuretrainer.jpg ... ')
-    # Load data.
-    digits, labels = load_digits('gesuretrainer.jpg')
+print('Shuffle data ... ')
+# Shuffle data
+rand = np.random.RandomState(10)
+shuffle = rand.permutation(len(digits))
+digits, labels = digits[shuffle], labels[shuffle]
 
-    print('Shuffle data ... ')
-    # Shuffle data
-    rand = np.random.RandomState(10)
-    shuffle = rand.permutation(len(digits))
-    digits, labels = digits[shuffle], labels[shuffle]
-    
-    print('Deskew images ... ')
-    digits_deskewed = list(map(deskew, digits))
-    
-    print('Defining HoG parameters ...')
-    # HoG feature descriptor
-    hog = get_hog()
+print('Deskew images ... ')
+digits_deskewed = list(map(deskew, digits))
 
-    print('Calculating HoG descriptor for every image ... ')
-    hog_descriptors = []
-    for img in digits_deskewed:
-        hog_descriptors.append(hog.compute(img))
-    hog_descriptors = np.squeeze(hog_descriptors)
+print('Defining HoG parameters ...')
+# HoG feature descriptor
+hog = get_hog()
 
-    print('Spliting data into training (90%) and test set (10%)... ')
-    train_n=int(0.9*len(hog_descriptors))
-    digits_train, digits_test = np.split(digits_deskewed, [train_n])
-    hog_descriptors_train, hog_descriptors_test = np.split(hog_descriptors, [train_n])
-    labels_train, labels_test = np.split(labels, [train_n])
-    
-    
-    print('Training SVM model ...')
-    model = SVM()
-    model.train(hog_descriptors_train, labels_train)
+print('Calculating HoG descriptor for every image ... ')
+hog_descriptors = []
+for img in digits_deskewed:
+    hog_descriptors.append(hog.compute(img))
+hog_descriptors = np.squeeze(hog_descriptors)
 
-    print('Saving SVM model ...')
-    model.save('digits_svm.dat')
+print('Spliting data into training (90%) and test set (10%)... ')
+train_n=int(0.9*len(hog_descriptors))
+digits_train, digits_test = np.split(digits_deskewed, [train_n])
+hog_descriptors_train, hog_descriptors_test = np.split(hog_descriptors, [train_n])
+labels_train, labels_test = np.split(labels, [train_n])
 
 
-    print('Evaluating model ... ')
-    vis = evaluate_model(model, digits_test, hog_descriptors_test, labels_test)
-    cv2.imwrite("digits-classification.jpg",vis)
-    cv2.imshow("Vis", vis)
-    cv2.waitKey(0)
+print('Training SVM model ...')
+model = SVM()
+model.train(hog_descriptors_train, labels_train)
+
+print('Saving SVM model ...')
+model.save('digits_svm.dat')
 
 
-
+print('Evaluating model ... ')
+vis = evaluate_model(model, digits_test, hog_descriptors_test, labels_test)
+cv2.imwrite("digits-classification.jpg",vis)
+cv2.imshow("Vis", vis)
+cv2.waitKey(0)
