@@ -237,6 +237,10 @@ def _cropSaveTrace():
 def recognizeSpell():
     finalTrace = _cropSaveTrace()
     deskewedTrace = _deskew(finalTrace)
+    if ENABLE_SAVE_IMAGE:
+        fileName = "Image" + str(time.time()) + ".png"
+        cv2.imwrite(fileName, deskewedTrace)
+        print("Image saved as " + fileName)
     hog = get_hog()
     descriptors = hog.compute(deskewedTrace)
     descriptors = np.squeeze(descriptors)
@@ -274,44 +278,25 @@ while(True):
     wandTraceFrame = getWandTrace(gray)
     cv2.imshow(windowName, wandTraceFrame)
 
-    if not ENABLE_SAVE_IMAGE:
-        if (checkTraceValidity()):
-            print("Trace valid for spell rcognition")
-            spell = recognizeSpell()
-            print(spell)
+    if (checkTraceValidity()):
+        print("Trace valid for spell rcognition")
+        spell = recognizeSpell()
+        print(spell)
 
-            if spell == 0:
-                print("*** 0: M Shape Detected ***")
-            elif spell == 1:
-                print("*** 1: Circle with Line Detected ***")
-            elif spell == 2:
-                print("*** 2: 4 Shape detected ***")
-            elif spell == 3:
-                print("*** 3: Squiggly line detected ***")
-            else:
-                print("That's not a spell")
+        if spell == 0:
+            print("*** 0: M Shape Detected ***")
+        elif spell == 1:
+            print("*** 1: Circle with Line Detected ***")
+        elif spell == 2:
+            print("*** 2: 4 Shape detected ***")
+        elif spell == 3:
+            print("*** 3: Squiggly line detected ***")
+        else:
+            print("That's not a spell")
 
-            eraseTrace()
+        eraseTrace()
 
     waitKey = cv2.waitKey(10)
-
-    if waitKey == ord('s'):
-        print("Saving Image")
-        if ENABLE_SAVE_IMAGE:
-            if (checkTraceValidity()):
-                fileName = "Image" + str(time.time()) + ".png"
-                finalTrace = _cropSaveTrace()
-                deskewedTrace = _deskew(finalTrace)
-                cv2.imwrite(fileName, deskewedTrace)
-                print("Image saved as " + fileName)
-            else:
-                print("Unable to save image, not valid trace")
-            eraseTrace()
-
-    if waitKey == ord('c'):
-        print("Clear Image")
-        if ENABLE_SAVE_IMAGE:
-            eraseTrace()
 
     if waitKey == ord('q'):
         print("Quitting")
