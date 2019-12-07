@@ -158,23 +158,16 @@ def checkTraceValidity():
         if (len(tracePoints) > DEQUE_BUFFER_SIZE - 5):
             sizeTrace()
             return True
-
-        # It's been over 4 seconds since the last keypoint
         eraseTrace()
 
     return False
 
-
 def eraseTrace():
     global wandMoveTracingFrame, tracePoints
-    # Erase existing trace
     wandMoveTracingFrame = np.zeros((frameHeight, frameWidth, 1), np.uint8)
-    # Empty corresponding tracePoints
     tracePoints = []
 
-
 def _cropSaveTrace():
-    # todo: this is cropping too closely, try to get some padding in there
     global _traceUpperCorner, _traceLowerCorner
     if (_traceUpperCorner[0] > CROPPED_IMG_MARGIN):
         _traceUpperCorner = (
@@ -205,7 +198,6 @@ def _cropSaveTrace():
 
     if (traceHeight > traceWidth):
         _sizeheight = int(TRAINER_IMAGE_WIN_SIZE)
-        # Since traceHeight & traceWidth are always gonna be > TRAINER_IMAGE_WIN_SIZE
         _sizewidth = int(traceWidth * TRAINER_IMAGE_WIN_SIZE / traceHeight)
 
     else:
@@ -213,15 +205,9 @@ def _cropSaveTrace():
         _sizeheight = int(traceHeight * TRAINER_IMAGE_WIN_SIZE / traceWidth)
 
     clone = wandMoveTracingFrame.copy()
-    # fileName = "ImagewandMoveTracingFrame" + str(time.time()) + ".png"
-    # cv2.imwrite(fileName, wandMoveTracingFrame)
     crop = clone[int(_traceUpperCorner[1]):int(_traceLowerCorner[1]), int(
         _traceUpperCorner[0]):int(_traceLowerCorner[0])]
-    # fileName = "ImageCrop" + str(time.time()) + ".png"
-    # cv2.imwrite(fileName, crop)
     resizedCroppedTrace = cv2.resize(crop, (_sizewidth, _sizeheight))
-    # fileName = "ImageResize" + str(time.time()) + ".png"
-    # cv2.imwrite(fileName, resizedCroppedTrace)
     _finalTraceCell = np.zeros((TRAINER_IMAGE_WIN_SIZE, TRAINER_IMAGE_WIN_SIZE, 1), np.uint8)
     for i in range(resizedCroppedTrace.shape[0]):
         for j in range(resizedCroppedTrace.shape[1]):
@@ -248,7 +234,6 @@ def recognizeSpell():
     print(prediction)
     return prediction
 
-
 def _deskew(img):
     SZ = 64
     m = cv2.moments(img)
@@ -259,7 +244,6 @@ def _deskew(img):
     img = cv2.warpAffine(
         img, M, (SZ, SZ), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
     return img
-
 
 _blobDetector = get_blob_detector()
 
@@ -274,20 +258,23 @@ while(True):
     cv2.imshow(windowName, wandTraceFrame)
 
     if (checkTraceValidity()):
-        print("Trace valid for spell rcognition")
         spell = recognizeSpell()
-        print(spell)
+
+        # Todo: Get probability % and set min value
 
         if spell == 0:
-            print("*** 0: M Shape Detected ***")
+            text = "M Shape"
         elif spell == 1:
-            print("*** 1: Circle with Line Detected ***")
+            text = "Circle Shape"
         elif spell == 2:
-            print("*** 2: 4 Shape detected ***")
+            text = "4 Shape"
         elif spell == 3:
-            print("*** 3: Squiggly line detected ***")
-        else:
-            print("That's not a spell")
+            text = "Squiggly Shape"
+
+        # Show the user what was detected
+        wandTraceFrame = cv2.putText(wandTraceFrame, text, (00, 185), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA, False) 
+        cv2.imshow(windowName, wandTraceFrame)
+        cv2.waitKey(3000)    
 
         eraseTrace()
 
