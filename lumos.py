@@ -6,11 +6,10 @@ import math
 # Settings
 DEQUE_BUFFER_SIZE = 40
 TRACE_THICKNESS = 4
-ENABLE_SAVE_IMAGE = False
+ENABLE_SAVE_IMAGE = True
 TRAINED_SPELL_MODEL = "spellsModel.yml"
 TRAINER_IMAGE_WIN_SIZE = 64
 windowName = "Wand Trace Window"
-MINTRACE_AREA = 7600
 CROPPED_IMG_MARGIN = 10  # pixels
 MAX_TRACE_SPEED = 150  # pixels/second (30p/0.2sec)
 deviceID = 0
@@ -130,46 +129,37 @@ def wandVisible():
         return False
     return True
 
+def sizeTrace():
+    global _traceUpperCorner, _traceLowerCorner, tracePoints
+    _traceUpperCorner = (frameWidth, frameHeight)
+    _traceLowerCorner = (0, 0)
+
+    for i in range(len(tracePoints)):
+        if (tracePoints[i].size == -99.0):
+            continue
+        pt1 = (tracePoints[i - 1].pt[0], tracePoints[i - 1].pt[1])
+        if (pt1[0] < _traceUpperCorner[0]):
+            _traceUpperCorner = (pt1[0], _traceUpperCorner[1])
+        if (pt1[0] > _traceLowerCorner[0]):
+            _traceLowerCorner = (pt1[0], _traceLowerCorner[1])
+        if (pt1[1] < _traceUpperCorner[1]):
+            _traceUpperCorner = (_traceUpperCorner[0], pt1[1])
+        if (pt1[1] > _traceLowerCorner[1]):
+            _traceLowerCorner = (_traceLowerCorner[0], pt1[1])
 
 def checkTraceValidity():
-    global _traceUpperCorner, _traceLowerCorner, blobKeypoints, tracePoints, _traceUpperCorner, _traceLowerCorner
+    global _traceUpperCorner, _traceLowerCorner, tracePoints
     if (len(blobKeypoints) == 0):
         currentKeypointTime = time.time()
         elapsed = currentKeypointTime - lastKeypointTime
-        if (elapsed < 5.0):
+        if (elapsed < 4.0):
             return False
 
         if (len(tracePoints) > DEQUE_BUFFER_SIZE - 5):
-            _traceUpperCorner = (frameWidth, frameHeight)
-            _traceLowerCorner = (0, 0)
+            sizeTrace()
+            return True
 
-            # Draw a trace by connecting all the keypoints stored in the deque
-            # Also update lower and upper bounds of the trace
-            for i in range(len(tracePoints)):
-                if (tracePoints[i].size == -99.0):
-                    continue
-                pt1 = (tracePoints[i - 1].pt[0], tracePoints[i - 1].pt[1])
-                # pt2 = (tracePoints[i].pt[0], tracePoints[i].pt[1])
-
-                # Min x,y = traceUpperCorner points
-                # Max x,y = traceLowerCorner points
-
-                if (pt1[0] < _traceUpperCorner[0]):
-                    _traceUpperCorner = (pt1[0], _traceUpperCorner[1])
-                if (pt1[0] > _traceLowerCorner[0]):
-                    _traceLowerCorner = (pt1[0], _traceLowerCorner[1])
-                if (pt1[1] < _traceUpperCorner[1]):
-                    _traceUpperCorner = (_traceUpperCorner[0], pt1[1])
-                if (pt1[1] > _traceLowerCorner[1]):
-                    _traceLowerCorner = (_traceLowerCorner[0], pt1[1])
-
-            traceArea = (_traceLowerCorner[0] - _traceUpperCorner[0]) * \
-                (_traceLowerCorner[1] - _traceUpperCorner[1])
-
-            if (traceArea > MINTRACE_AREA):
-                return True
-
-        # It's been over five seconds since the last keypoint and trace isn't valid
+        # It's been over 4 seconds since the last keypoint
         eraseTrace()
 
     return False
@@ -223,11 +213,16 @@ def _cropSaveTrace():
         _sizeheight = int(traceHeight * TRAINER_IMAGE_WIN_SIZE / traceWidth)
 
     clone = wandMoveTracingFrame.copy()
+    # fileName = "ImagewandMoveTracingFrame" + str(time.time()) + ".png"
+    # cv2.imwrite(fileName, wandMoveTracingFrame)
     crop = clone[int(_traceUpperCorner[1]):int(_traceLowerCorner[1]), int(
         _traceUpperCorner[0]):int(_traceLowerCorner[0])]
+    # fileName = "ImageCrop" + str(time.time()) + ".png"
+    # cv2.imwrite(fileName, crop)
     resizedCroppedTrace = cv2.resize(crop, (_sizewidth, _sizeheight))
-    _finalTraceCell = np.zeros(
-        (TRAINER_IMAGE_WIN_SIZE, TRAINER_IMAGE_WIN_SIZE, 1), np.uint8)
+    # fileName = "ImageResize" + str(time.time()) + ".png"
+    # cv2.imwrite(fileName, resizedCroppedTrace)
+    _finalTraceCell = np.zeros((TRAINER_IMAGE_WIN_SIZE, TRAINER_IMAGE_WIN_SIZE, 1), np.uint8)
     for i in range(resizedCroppedTrace.shape[0]):
         for j in range(resizedCroppedTrace.shape[1]):
             _finalTraceCell[(i, j)] = resizedCroppedTrace[(i, j)]
@@ -236,11 +231,11 @@ def _cropSaveTrace():
 
 def recognizeSpell():
     finalTrace = _cropSaveTrace()
-    deskewedTrace = _deskew(finalTrace)
     if ENABLE_SAVE_IMAGE:
         fileName = "Image" + str(time.time()) + ".png"
-        cv2.imwrite(fileName, deskewedTrace)
+        cv2.imwrite(fileName, finalTrace)
         print("Image saved as " + fileName)
+    deskewedTrace = _deskew(finalTrace)
     hog = get_hog()
     descriptors = hog.compute(deskewedTrace)
     descriptors = np.squeeze(descriptors)
