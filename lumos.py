@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import time
 import math
+import os
 
 # Settings
 DEQUE_BUFFER_SIZE = 40
@@ -24,6 +25,8 @@ cameraFrame = np.zeros((frameHeight, frameWidth, 1), np.uint8)
 tracePoints = []
 blobKeypoints = []
 lastKeypointTime = time.time()
+dir_path = os.path.dirname(os.path.realpath(__file__))
+targetSamplesDirectory = dir_path + "/samples"
 
 
 def get_blob_detector():
@@ -218,9 +221,7 @@ def _cropSaveTrace():
 def recognizeSpell():
     finalTrace = _cropSaveTrace()
     if ENABLE_SAVE_IMAGE:
-        fileName = "Image" + str(time.time()) + ".png"
-        cv2.imwrite(fileName, finalTrace)
-        print("Image saved as " + fileName)
+        saveSample(finalTrace)
     deskewedTrace = _deskew(finalTrace)
     hog = get_hog()
     descriptors = hog.compute(deskewedTrace)
@@ -233,6 +234,13 @@ def recognizeSpell():
     prediction = svm.predict(descriptors[None, :])[1].ravel()
     print(prediction)
     return prediction
+
+def saveSample(finalTrace):
+    if not os.path.exists(targetSamplesDirectory):
+        os.makedirs(targetSamplesDirectory)
+    fileName = targetSamplesDirectory + "/Image" + str(time.time()) + ".png"
+    cv2.imwrite(fileName, finalTrace)
+    print("Image saved as " + fileName)
 
 def _deskew(img):
     SZ = 64

@@ -1,0 +1,5 @@
+# Ignore sample images
+samples
+
+# Ignore training images
+training_images
