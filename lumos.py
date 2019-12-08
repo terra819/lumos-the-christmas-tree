@@ -1,3 +1,6 @@
+#Inspired by Sanni-t's techMagic app: 
+#https://github.com/sanni-t/techMagicApp
+
 import numpy as np
 import cv2
 import time
@@ -8,7 +11,6 @@ import os
 DEQUE_BUFFER_SIZE = 40
 TRACE_THICKNESS = 4
 ENABLE_SAVE_IMAGE = True
-TRAINED_SPELL_MODEL = "spellsModel.yml"
 TRAINER_IMAGE_WIN_SIZE = 64
 windowName = "Wand Trace Window"
 CROPPED_IMG_MARGIN = 10  # pixels
@@ -27,6 +29,7 @@ blobKeypoints = []
 lastKeypointTime = time.time()
 dir_path = os.path.dirname(os.path.realpath(__file__))
 targetSamplesDirectory = dir_path + "/samples"
+TRAINED_SPELL_MODEL = dir_path + "/spell_model.dat"
 
 
 def get_blob_detector():
@@ -267,15 +270,23 @@ while(True):
         spell = recognizeSpell()
 
         # Todo: Get probability % and set min value
-
+        text = "Unknown"
         if spell == 0:
-            text = "M Shape"
+            text = "Arresto Momentum"
         elif spell == 1:
-            text = "Circle Shape"
+            text = "Finite Incantatem"
         elif spell == 2:
-            text = "4 Shape"
+            text = "Reparo"
         elif spell == 3:
-            text = "Squiggly Shape"
+            text = "Incendio"
+        elif spell == 4:
+            text = "Nox"
+        elif spell == 5:
+            text = "Lumos"
+        elif spell == 6:
+            text = "Aguamenti"
+        elif spell == 7:
+            text = "Silencio"
 
         # Show the user what was detected
         wandTraceFrame = cv2.putText(wandTraceFrame, text, (00, 185), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA, False) 
