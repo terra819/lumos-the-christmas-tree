@@ -9,49 +9,36 @@ import numpy as np
 import os
 
 TRAINER_DIRECTORY = "training_images" #directory containing sorted images
-MIN_IMAGES_REQUIRED = 5 #for best results, do not set lower than 5
+MIN_IMAGES_REQUIRED = 4 #for best results, do not set lower than 5
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 targetTrainersDirectory = dir_path + "/" + TRAINER_DIRECTORY
 print(targetTrainersDirectory)
 
 def createTrainingImage():
-    global _spellLabels, _cellWidth, _cellHeight, _imagesPerSpell, _trainerWidth, _trainerHeight
+    global _spellLabels, _cellWidth, _cellHeight, _imagesPerSpell
 
     if not os.path.exists(targetTrainersDirectory):
         print("can't find trainer directory")
         # directory not found, stop
         return
-    
-    #get directory contents
-    # print([name for name in os.listdir(".") if os.path.isdir(targetTrainersDirectory)])
-    # _spellLabels = [name for name in os.listdir(".") if os.path.isdir(targetTrainersDirectory)]
 
     #get image sizes
     _cellWidth = 0
     _cellHeight = 0
     _validSize = True   
-    _minSpellCount = 0 
-    _imgRows = []
-    _spellLabels = []
-    # for i in range(len(_spellLabels)):
-
-        # print("checking contents of " + targetTrainersDirectory + _spellLabels[i])
-        # r=root, d=directories, f = files
-    for r, d, f in os.walk(targetTrainersDirectory):
+    _imagesPerSpell = 0
+    
+    for (root,dirs,files) in os.walk(targetTrainersDirectory, topdown=True): 
         _spellCount = 0
-        _imgRow = []
-        _spellLabels.append(d)
-        for file in f:
+        _spellLabels = dirs
+        for file in files:
             if ".png" in file:
                 _spellCount = _spellCount + 1
-                path = os.path.join(r, file)
-                print("found file: " + path)
+                path = os.path.join(root, file)
                 img = cv2.imread(path, 0)
                 h = img.shape[0]
                 w = img.shape[1]
-                print('width: ', w)
-                print('height:', h)
                 if (_cellWidth == 0 and _cellHeight == 0):
                     _cellWidth = w
                     _cellHeight = h
@@ -60,26 +47,35 @@ def createTrainingImage():
                     # can't continue, all images must be same size
                     _validSize = False
                     break
-                _imgRow.append(img)
         #if all images are not same size, stop. must be same size
         if not _validSize: 
             print("Images must all be the same size. Images detected that are different sizes")
             return
         if _spellCount > 0:
-            if _minSpellCount == 0:
-                _minSpellCount = _spellCount
-            elif _spellCount < _minSpellCount:
-                _minSpellCount = _spellCount
-        #determine min number of images in each dir
-        if _minSpellCount < MIN_IMAGES_REQUIRED:
-            #stop, need more images
-            print(_spellLabels)
-            print("Not enough images for each spell. Each directory must contain at least " + str(MIN_IMAGES_REQUIRED) + " images")
-            return
+            if _imagesPerSpell == 0:
+                _imagesPerSpell = _spellCount
+            elif _spellCount < _imagesPerSpell:
+                _imagesPerSpell = _spellCount
+            #determine min number of images in each dir
+            if (_imagesPerSpell < MIN_IMAGES_REQUIRED):
+                #stop, need more images
+                print("Not enough images for each spell. Each directory must contain at least " + str(MIN_IMAGES_REQUIRED) + " images")
+                return
+
+    _imgRows = []
+    for (root,dirs,files) in os.walk(targetTrainersDirectory, topdown=True): 
+        _imgRow = []
+        for file in files:
+            if len(_imgRow) < _imagesPerSpell:
+                if ".png" in file:
+                    path = os.path.join(root, file)
+                    img = cv2.imread(path, 0)
+                    _imgRow.append(img)
         _spellRow = cv2.hconcat(_imgRow)
-        _imgRows.append(_spellRow)
+        if _spellRow is not None:
+            _imgRows.append(_spellRow)
     _matrix = cv2.vconcat(_imgRows)
-    fileName = dir_path + "/Trainer.png"
+    fileName = dir_path + "/training_image.png"
     cv2.imwrite(fileName, _matrix)
         
 createTrainingImage()
