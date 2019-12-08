@@ -109,8 +109,6 @@ def getWandTrace(frameData):
             speed = distance / elapsed
             if (speed >= MAX_TRACE_SPEED):
                 return wandMoveTracingFrame
-            if (len(tracePoints) >= DEQUE_BUFFER_SIZE):
-                tracePoints.pop(0)
 
             tracePoints.append(blobKeypoints[0])
             cv2.line(wandMoveTracingFrame, (int(pt1.pt[0]), int(pt1.pt[1])), (int(
