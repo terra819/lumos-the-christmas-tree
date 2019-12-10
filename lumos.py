@@ -6,11 +6,12 @@ import cv2
 import time
 import math
 import os
+import spellcaster
 
 # Settings
 DEQUE_BUFFER_SIZE = 40
 TRACE_THICKNESS = 4
-ENABLE_SAVE_IMAGE = True
+ENABLE_SAVE_IMAGE = False
 TRAINER_IMAGE_WIN_SIZE = 64
 windowName = "Wand Trace Window"
 CROPPED_IMG_MARGIN = 10  # pixels
@@ -273,20 +274,28 @@ while(True):
         text = "Unknown"
         if spell == 0:
             text = "Arresto Momentum"
+            spellcaster.arresto_momentum()
         elif spell == 1:
             text = "Finite Incantatem"
+            spellcaster.finite_incantatem()
         elif spell == 2:
             text = "Reparo"
+            spellcaster.reparo()
         elif spell == 3:
             text = "Incendio"
+            spellcaster.incendio()
         elif spell == 4:
             text = "Nox"
+            spellcaster.nox()
         elif spell == 5:
             text = "Lumos"
+            spellcaster.lumos()
         elif spell == 6:
             text = "Aguamenti"
+            spellcaster.aguamenti()
         elif spell == 7:
             text = "Silencio"
+            spellcaster.silencio()
 
         # Show the user what was detected
         wandTraceFrame = cv2.putText(wandTraceFrame, text, (00, 185), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA, False) 
