@@ -17,6 +17,7 @@ windowName = "Wand Trace Window"
 CROPPED_IMG_MARGIN = 10  # pixels
 MAX_TRACE_SPEED = 150  # pixels/second (30p/0.2sec)
 deviceID = 0
+flipVertical = True # Mounting to underside of tree, need to flip image
 
 # Globals
 camera = cv2.VideoCapture(deviceID)
@@ -261,6 +262,8 @@ while(True):
     # Capture frame-by-frame
     retval, frame = camera.read()
     flipped = cv2.flip(frame, 1)
+    if flipVertical:
+        flipped = cv2.flip(flipped, 0)
     gray = cv2.cvtColor(flipped, cv2.COLOR_BGR2GRAY)
 
     # get wand trace frame
