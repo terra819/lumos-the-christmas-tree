@@ -19,7 +19,6 @@ BROKEN = "broken"
 
 broke = False
 current_spell = ''
-paused = False
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 mp3Dir = dir_path + "/mp3s/"
@@ -27,20 +26,32 @@ media_prefix= "file://" + mp3Dir
 vlc_path = "/usr/bin/cvlc"
 
 def killMusic():
-    if 'player' in vars() or 'player' in globals():
-        if os.getpgid(player.pid)> 0:
-            os.killpg(os.getpgid(player.pid), signal.SIGTERM)
+    print("killing music")
+    if 'musicPlayer' in vars() or 'musicPlayer' in globals():
+        musicPlayer.kill()
 
 def playMusic(file): 
-    global player
+    global musicPlayer
+    print(f"playing music {file}")
     killMusic()
-    player = subprocess.Popen(f"{vlc_path} {media_prefix + file}", shell=True)
+    musicPlayer = subprocess.Popen(f"exec {vlc_path} {media_prefix + file}", shell=True)
 
 def killLights():
-    global paused
+    print("killing lights")
+    pauseLights()
     pixels = [ (0,0,0) ] * numLEDs
     client.put_pixels(pixels)
-    paused = True
+
+def playLights(file): 
+    global lightPlayer
+    print(f"playing lights {file}")
+    killLights()
+    lightPlayer = subprocess.Popen(f"exec python3 {dir_path}/{file}", shell=True)
+
+def pauseLights():
+    print("pausing lights")
+    if 'lightPlayer' in vars() or 'lightPlayer' in globals():
+        lightPlayer.kill()
 
 def setNewSpell(spell):
     global current_spell, previous_spell, paused
@@ -52,20 +63,15 @@ def setNewSpell(spell):
     paused = False
 
 def lumos():
-    global player
     print("Lumos called")
     if broke:
         print("broke")
         return
     setNewSpell(LUMOS)
 
-    #turn on red green chasers, hp theme song
-    playMusic("hptheme.mp3")
-    while current_spell == LUMOS and not paused:
-        my_pixels = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] * numLEDs
-        random.shuffle(my_pixels)
-        client.put_pixels(my_pixels)
-        time.sleep(0.3)
+    # bright yellow light
+    pixels = [ (255,255,0) ] * numLEDs
+    client.put_pixels(pixels)
 
 def nox():
     print("Nox called")
@@ -77,20 +83,14 @@ def nox():
 
 def aguamenti():
     print("Aguamenti called")
-    global player
     if broke:
         print("broke")
         return
     setNewSpell(AGUAMENTI)
-    print(paused)
 
     #run water animation and sounds
-    playMusic("water.mp3")
-    while current_spell == AGUAMENTI and not paused:
-        my_pixels = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] * numLEDs
-        random.shuffle(my_pixels)
-        client.put_pixels(my_pixels)
-        time.sleep(0.3)
+    playMusic("hptheme.mp3")
+    playLights("lights_aguamenti.py")
 
 def finite_incantatem():
     print("Finite Incantatem called")
@@ -107,11 +107,11 @@ def arresto_momentum():
     if broke:
         print("broke")
         return
-    #play record scratch then
-    # playMusic("recordscratch.mp3")
+    #play record scratch
+    playMusic("hptheme.mp3")
     # don't need to stop the player, it shold only be a couple of seconds long
     #pause current animation and music
-    paused = True
+    pauseLights()
 
 def silencio():
     print("Silencio called")
@@ -128,12 +128,8 @@ def incendio():
         return
     #play fire animation and sounds
     setNewSpell(INCENDIO)
-    # playMusic("fire.mp3")
-    while current_spell == INCENDIO and not paused:
-        my_pixels = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] * numLEDs
-        random.shuffle(my_pixels)
-        client.put_pixels(my_pixels)
-        time.sleep(0.3)
+    playMusic("hptheme.mp3")
+    playLights("lights_incendio.py")
 
 def reparo():
     print("reparo called")
@@ -143,7 +139,7 @@ def reparo():
     #resume current animation
     
     # play starting up sound then restart current spell
-    # playMusic("comingbackonline.mp3")
+    playMusic("hptheme.mp3")
     if previous_spell == LUMOS:
         lumos()
     elif previous_spell == AGUAMENTI:
@@ -158,10 +154,5 @@ def broken():
         return
     setNewSpell(BROKEN)
     #play spazzy electric sounds
-    # playMusic("spazzymusic.mp3")
-    # play flicker-y animation that spazzes out
-    while current_spell == BROKEN and not paused:
-        my_pixels = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] * numLEDs
-        random.shuffle(my_pixels)
-        client.put_pixels(my_pixels)
-        time.sleep(0.3)
+    playMusic("hptheme.mp3")
+    playLights("lights_broken.py")

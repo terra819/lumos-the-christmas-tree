@@ -34,8 +34,5 @@ else:
 while True:
     my_pixels = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] * numLEDs
     random.shuffle(my_pixels)
-    if client.put_pixels(my_pixels, channel=0):
-        print('sent')
-    else:
-        print('not connected')
+    client.put_pixels(my_pixels)
     time.sleep(0.3)
