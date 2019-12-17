@@ -11,15 +11,10 @@ fadecandyUrl = 'localhost:7890'
 client = opc.Client(fadecandyUrl)
 numLEDs = 50
 
-# playable animation sequences
 LUMOS = "lumos" 
 AGUAMENTI = "aguamenti"
 INCENDIO = "incendio"
 BROKEN = "broken"
-
-# broke = False
-current_spell = ''
-
 dir_path = os.path.dirname(os.path.realpath(__file__))
 mp3Dir = dir_path + "/mp3s/"
 media_prefix= "file://" + mp3Dir
@@ -28,6 +23,10 @@ incendio_command = f"{dir_path}/incendio/strip50_flames" # replace with your com
 aguamenti_command = f"{dir_path}/aguamenti/strip50_water"
 broken_command = f"{dir_path}/broken/strip50_spazzy"
 lumos_command = f"{dir_path}/lumos/strip50_light"
+incendio_mp3 = "fire"
+arresto_momentum_mp3 = "record_scratch"
+aguamenti_mp3 = "river"
+broken_mp3 = "spazzy"
 
 def killMusic():
     print("killing music")
@@ -38,7 +37,7 @@ def playMusic(file):
     global musicPlayer
     print(f"playing music {file}")
     killMusic()
-    musicPlayer = subprocess.Popen(f"exec {vlc_path} {media_prefix + file}", shell=True)
+    musicPlayer = subprocess.Popen(f"exec {vlc_path} {media_prefix}{file}.mp3", shell=True)
 
 def killLights():
     print("killing lights")
@@ -71,7 +70,6 @@ def playLights(command):
 def lumos():
     print("Lumos called")
     setNewSpell(LUMOS)
-
     playLights(lumos_command)
 
 def nox():
@@ -83,7 +81,7 @@ def aguamenti():
     setNewSpell(AGUAMENTI)
 
     #run water animation and sounds
-    playMusic("zapsplat_nature_ocean_waves_medium_splash_rocks_distance_water_rushes_around_rocks_shallow_close_43574.mp3")
+    playMusic(aguamenti_mp3)
     playLights(aguamenti_command)
 
 def finite_incantatem():
@@ -93,11 +91,7 @@ def finite_incantatem():
     
 def arresto_momentum():
     print("Arresto Momentum called")
-    global paused
-    #play record scratch
-    playMusic("hptheme.mp3")
-    # don't need to stop the player, it shold only be a couple of seconds long
-    #pause current animation and music
+    #pause current animation
     pauseLights()
 
 def silencio():
@@ -106,17 +100,14 @@ def silencio():
 
 def incendio():
     print("Incendio called")
-    #play fire animation and sounds
+    # play fire animation and sounds
     setNewSpell(INCENDIO)
-    playMusic("audio_hero_FireMediumRoarHiss_PE052201_358.mp3")
+    playMusic(incendio_mp3)
     playLights(incendio_command)
 
 def reparo():
     print("reparo called")
-    #resume previous animation
-    
-    # play starting up sound then restart previous spell
-    playMusic("hptheme.mp3")
+    # resume previous animation
     if previous_spell:
         if previous_spell == LUMOS:
                 lumos()
@@ -131,5 +122,5 @@ def broken():
     print("broken called")
     setNewSpell(BROKEN)
     #play spazzy electric sounds
-    playMusic("sound_design_effect_electricity_electric_arc.mp3")
+    playMusic(broken_mp3)
     playLights(broken_command)
