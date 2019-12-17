@@ -6,3 +6,13 @@ training_images
 
 # Ignore mp3 files
 mp3s
+
+# Ignore java spell executables, too big
+broken
+aguamenti
+incendio
+lumos
+strip50_flames
+strip50_water
+strip50_spazzy
+strip50_light

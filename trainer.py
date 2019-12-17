@@ -2,7 +2,7 @@
 # Assumes images are sorted in the correct directories
 # Ex: /training_images/lumos/image.jpg
 #                    /nox/image1.jpg
-# Names of directories will be used as spell labels
+# Names of directories are not important
 # Names of images inside aren't important
 import cv2
 import numpy as np

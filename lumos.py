@@ -7,6 +7,7 @@ import time
 import math
 import os
 import spellcaster
+import random
 
 # Settings
 DEQUE_BUFFER_SIZE = 40
@@ -31,6 +32,7 @@ lastKeypointTime = time.time()
 dir_path = os.path.dirname(os.path.realpath(__file__))
 targetSamplesDirectory = dir_path + "/samples"
 TRAINED_SPELL_MODEL = dir_path + "/spell_model.dat"
+breakIn = random.randint(5,15)
 
 
 def get_blob_detector():
@@ -256,11 +258,13 @@ def _deskew(img):
     return img
 
 _blobDetector = get_blob_detector()
+spellCount = 0
+broken = False
 
 while(True):
     # Capture frame-by-frame
     retval, frame = camera.read()
-    flipped = cv2.flip(frame, 0) # my camera will be installed upside down, so need to flip the image. You may not need this
+    flipped = cv2.flip(frame, 1)
     gray = cv2.cvtColor(flipped, cv2.COLOR_BGR2GRAY)
 
     # get wand trace frame
@@ -272,36 +276,47 @@ while(True):
 
         # Todo: Get probability % and set min value
         text = "Unknown"
-        if spell == 0:
-            text = "Arresto Momentum"
-            spellcaster.arresto_momentum()
-        elif spell == 1:
-            text = "Finite Incantatem"
-            spellcaster.finite_incantatem()
-        elif spell == 2:
-            text = "Reparo"
-            spellcaster.reparo()
-        elif spell == 3:
-            text = "Incendio"
-            spellcaster.incendio()
-        elif spell == 4:
-            text = "Nox"
-            spellcaster.nox()
-        elif spell == 5:
-            text = "Lumos"
-            spellcaster.lumos()
-        elif spell == 6:
-            text = "Aguamenti"
-            spellcaster.aguamenti()
-        elif spell == 7:
-            text = "Silencio"
-            spellcaster.silencio()
+        if(spellCount != breakIn):
+            if not broken:
+                if spell == 0:
+                    text = "Arresto Momentum"
+                    spellcaster.arresto_momentum()
+                elif spell == 1:
+                    text = "Finite Incantatem"
+                    spellcaster.finite_incantatem()
+                elif spell == 3:
+                    text = "Incendio"
+                    spellcaster.incendio()
+                elif spell == 4:
+                    text = "Nox"
+                    spellcaster.nox()
+                elif spell == 5:
+                    text = "Lumos"
+                    spellcaster.lumos()
+                elif spell == 6:
+                    text = "Aguamenti"
+                    spellcaster.aguamenti()
+                elif spell == 7:
+                    text = "Silencio"
+                    spellcaster.silencio()
+            else: 
+                #currently broke! can only perform reparo spell:
+                if spell == 2:
+                    text = "Reparo"
+                    broken = False
+                    spellcaster.reparo()
+        else:
+            # randomly 'break'
+            text = "Broken!"
+            broken = True
+            spellcaster.broken()
 
         # Show the user what was detected
         wandTraceFrame = cv2.putText(wandTraceFrame, text, (00, 185), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2, cv2.LINE_AA, False) 
         cv2.imshow(windowName, wandTraceFrame)
         cv2.waitKey(3000)    
 
+        spellCount = spellCount + 1
         eraseTrace()
 
     waitKey = cv2.waitKey(10)

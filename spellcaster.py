@@ -17,13 +17,17 @@ AGUAMENTI = "aguamenti"
 INCENDIO = "incendio"
 BROKEN = "broken"
 
-broke = False
+# broke = False
 current_spell = ''
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 mp3Dir = dir_path + "/mp3s/"
 media_prefix= "file://" + mp3Dir
 vlc_path = "/usr/bin/cvlc"
+incendio_command = f"{dir_path}/incendio/strip50_flames" # replace with your command for playing these light animations
+aguamenti_command = f"{dir_path}/aguamenti/strip50_water"
+broken_command = f"{dir_path}/broken/strip50_spazzy"
+lumos_command = f"{dir_path}/lumos/strip50_light"
 
 def killMusic():
     print("killing music")
@@ -42,16 +46,11 @@ def killLights():
     pixels = [ (0,0,0) ] * numLEDs
     client.put_pixels(pixels)
 
-def playLights(file): 
-    global lightPlayer
-    print(f"playing lights {file}")
-    killLights()
-    lightPlayer = subprocess.Popen(f"exec python3 {dir_path}/{file}", shell=True)
-
 def pauseLights():
     print("pausing lights")
     if 'lightPlayer' in vars() or 'lightPlayer' in globals():
-        lightPlayer.kill()
+        print(f"killing pid: {lightPlayer.pid}")
+        os.killpg(os.getpgid(lightPlayer.pid), signal.SIGTERM)
 
 def setNewSpell(spell):
     global current_spell, previous_spell, paused
@@ -62,51 +61,39 @@ def setNewSpell(spell):
     killLights()
     paused = False
 
+def playLights(command):
+    global lightPlayer
+    print(f"playing lights")
+    killLights()
+    lightPlayer = subprocess.Popen(f"exec {command}", stdout=subprocess.PIPE, 
+                       shell=True, preexec_fn=os.setsid)
+
 def lumos():
     print("Lumos called")
-    if broke:
-        print("broke")
-        return
     setNewSpell(LUMOS)
 
-    # bright yellow light
-    pixels = [ (255,255,0) ] * numLEDs
-    client.put_pixels(pixels)
+    playLights(lumos_command)
 
 def nox():
     print("Nox called")
-    if broke:
-        print("broke")
-        return
-    #turn off lights
     killLights()
 
 def aguamenti():
     print("Aguamenti called")
-    if broke:
-        print("broke")
-        return
     setNewSpell(AGUAMENTI)
 
     #run water animation and sounds
-    playMusic("hptheme.mp3")
-    playLights("lights_aguamenti.py")
+    playMusic("zapsplat_nature_ocean_waves_medium_splash_rocks_distance_water_rushes_around_rocks_shallow_close_43574.mp3")
+    playLights(aguamenti_command)
 
 def finite_incantatem():
     print("Finite Incantatem called")
-    if broke:
-        print("broke")
-        return
-    #turn off lights and music
     killMusic()
     killLights()
     
 def arresto_momentum():
     print("Arresto Momentum called")
     global paused
-    if broke:
-        print("broke")
-        return
     #play record scratch
     playMusic("hptheme.mp3")
     # don't need to stop the player, it shold only be a couple of seconds long
@@ -115,44 +102,34 @@ def arresto_momentum():
 
 def silencio():
     print("Silencio called")
-    if broke:
-        print("broke")
-        return
-    #turn off music
     killMusic()
 
 def incendio():
     print("Incendio called")
-    if broke:
-        print("broke")
-        return
     #play fire animation and sounds
     setNewSpell(INCENDIO)
-    playMusic("hptheme.mp3")
-    playLights("lights_incendio.py")
+    playMusic("audio_hero_FireMediumRoarHiss_PE052201_358.mp3")
+    playLights(incendio_command)
 
 def reparo():
     print("reparo called")
-    if not broke:
-        print("not broke")
-        return
-    #resume current animation
+    #resume previous animation
     
-    # play starting up sound then restart current spell
+    # play starting up sound then restart previous spell
     playMusic("hptheme.mp3")
-    if previous_spell == LUMOS:
-        lumos()
-    elif previous_spell == AGUAMENTI:
-        aguamenti()
-    elif previous_spell == INCENDIO:
-        incendio()
+    if previous_spell:
+        if previous_spell == LUMOS:
+                lumos()
+        elif previous_spell == AGUAMENTI:
+                aguamenti()
+        elif previous_spell == INCENDIO:
+                incendio()
+    else: 
+        finite_incantatem()
 
 def broken():
     print("broken called")
-    if not broken:
-        print("not broken")
-        return
     setNewSpell(BROKEN)
     #play spazzy electric sounds
-    playMusic("hptheme.mp3")
-    playLights("lights_broken.py")
+    playMusic("sound_design_effect_electricity_electric_arc.mp3")
+    playLights(broken_command)
