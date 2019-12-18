@@ -10,6 +10,7 @@ fadecandyUrl = 'localhost:7890'
 # Create a client object
 client = opc.Client(fadecandyUrl)
 numLEDs = 50
+current_spell = ''
 
 LUMOS = "lumos" 
 AGUAMENTI = "aguamenti"
@@ -37,7 +38,7 @@ def playMusic(file):
     global musicPlayer
     print(f"playing music {file}")
     killMusic()
-    musicPlayer = subprocess.Popen(f"exec {vlc_path} {media_prefix}{file}.mp3", shell=True)
+    musicPlayer = subprocess.Popen(f"exec {vlc_path} {media_prefix}{file}.mp3 --loop", shell=True)
 
 def killLights():
     print("killing lights")

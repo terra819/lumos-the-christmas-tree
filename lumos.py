@@ -325,5 +325,7 @@ while(True):
         print("Quitting")
         break
 
+# stop all spells
+spellcaster.finite_incantatem()
 camera.release()
 cv2.destroyAllWindows()
