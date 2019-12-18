@@ -16,3 +16,6 @@ strip50_flames
 strip50_water
 strip50_spazzy
 strip50_light
+
+# Ignore pycache
+__pycache__
