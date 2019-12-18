@@ -38,6 +38,9 @@ ALITOVE 50pcs DC 12V WS2811 Led Pixel Black 12mm Diffused Digital RGB Addressabl
 
 2. [fadecandy](https://github.com/scanlime/fadecandy)
 
+3. Optional: [processing](https://processing.org/)
+Procesing is for running your light animations, but you may choose another method
+
 ## Training Images
 This project comes with pre-programmed "spells" but you can train your own by using the steps below: 
 
