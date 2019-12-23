@@ -41,6 +41,19 @@ ALITOVE 50pcs DC 12V WS2811 Led Pixel Black 12mm Diffused Digital RGB Addressabl
 3. Optional: [processing](https://processing.org/)
 Procesing is for running your light animations, but you may choose another method
 
+## Compiling Processing Animations:
+
+I have included the files necessary to create the processing light animations, but because the java executables are so large, you will need to compile them separately. Below are the commands to do so (replace /home/pi/repos/ to wherever you clone this project): 
+
+`exec /usr/local/bin/processing-java --sketch=/home/pi/repos/lumos-the-christmas-tree/strip50_flames --output=/home/pi/repos/lumos-the-christmas-tree/incendio --platform=linux --export`
+
+`exec /usr/local/bin/processing-java --sketch=/home/pi/repos/lumos-the-christmas-tree/strip50_water --output=/home/pi/repos/lumos-the-christmas-tree/aguamenti --platform=linux --export`
+
+`exec /usr/local/bin/processing-java --sketch=/home/pi/repos/lumos-the-christmas-tree/strip50_light --output=/home/pi/repos/lumos-the-christmas-tree/lumos --platform=linux --export`
+
+`exec /usr/local/bin/processing-java --sketch=/home/pi/repos/lumos-the-christmas-tree/strip50_spazzy --output=/home/pi/repos/lumos-the-christmas-tree/broken --platform=linux --export`
+
+
 ## Training Images
 This project comes with pre-programmed "spells" but you can train your own by using the steps below: 
 
