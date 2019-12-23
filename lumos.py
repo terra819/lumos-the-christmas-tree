@@ -304,6 +304,8 @@ while(True):
                 if spell == 2:
                     text = "Reparo"
                     broken = False
+                    spellCount = 0
+                    breakIn = random.randint(5,15)
                     spellcaster.reparo()
         else:
             # randomly 'break'
