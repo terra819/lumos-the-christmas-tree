@@ -4,9 +4,6 @@ samples
 # Ignore training images
 training_images
 
-# Ignore mp3 files
-mp3s
-
 # Ignore java spell executables, too big
 broken
 aguamenti

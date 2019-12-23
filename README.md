@@ -12,7 +12,7 @@ After a trace is completed, the program uses opencv to predict the correct spell
 
 Then, once a spell has been interpreted, its corresponding function in `spellcaster.py` is triggered. Some spells trigger lights and music, some do other things. You may mix it up as you wish. 
 
-*Note: I do not own the rights to the mp3 files, so you will need to put your own files and filenames to play them in `spellcaster.py`
+Mp3 sound effects courtesy of [zapsplat.com](http://www.zapsplat.com)
 
 ## Hardware
 You may configure this to work with other setups, but here is what I've tested with: 
