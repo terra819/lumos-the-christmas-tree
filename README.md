@@ -1,6 +1,8 @@
 # lumos-the-christmas-tree
 Lumos the Christmas Tree with your Harry Potter Wand. Raspberry Pi, Neopixels, Infrared Night Vision IR Camera for Raspberry Pi, OpenCv, FadeCandy
 
+View Instructable with pictures at [https://www.instructables.com/id/Lumos-the-Christmas-Tree/](https://www.instructables.com/id/Lumos-the-Christmas-Tree/)
+
 ## Introduction
 This project is for my children. I wanted to give them a little piece of Hogwarts and teach them about programming. 
 
@@ -39,7 +41,7 @@ ALITOVE 50pcs DC 12V WS2811 Led Pixel Black 12mm Diffused Digital RGB Addressabl
 2. [fadecandy](https://github.com/scanlime/fadecandy)
 
 3. Optional: [processing](https://processing.org/)
-Procesing is for running your light animations, but you may choose another method
+Processing is for running your light animations, but you may choose another method
 
 ## Compiling Processing Animations:
 
@@ -60,7 +62,7 @@ This project comes with pre-programmed "spells" but you can train your own by us
 1. Edit `lumos.py` and set `ENABLE_SAVE_IMAGE` to `True`
 2. Then run `lumos.py` and draw your spells with your harry potter wand. The program will run as normal except it will save each spell traced. After tracing your images (at least 10 per spell for best results), stop the program (q) and examine your samples folder. The samples folder will contain all of your traced spells. 
 3. Create a folder called `training_images` in this project
-4. Create folders wthin the `training_images`;  1 folder for each spell. The names of the folders inside `training_images` does not matter to the program. 
+4. Create folders within the `training_images`;  1 folder for each spell. The names of the folders inside `training_images` do not matter to the program. 
 5. Sort your images from the sample directory into your separate folders inside `training_images`
 ex: 
 ```
@@ -75,7 +77,7 @@ training_images
 
 Each folder inside `training_images` indicates a spell that the program will train on. 
 
-6. After finished sorting sample images into their directories, run `trainer.py`. it will output a `training_image.png` and `spell_model.dat` file
+6. After finished sorting sample images into their directories, run `trainer.py`. it will overwrite the `training_image.png` and `spell_model.dat` files
 
 7. In the lumos.py file, you will need to match up your new spells with the indexes of the spell model. You can see how this is already done. ex: 
 ``` py
@@ -105,4 +107,4 @@ elif spell == 7:
     spellcaster.silencio()
 ```
 
-8. Update `spellcaster.py` as necessary to accomodate your new spells/spell names
+8. Update `spellcaster.py` as necessary to accommodate your new spells/spell names.

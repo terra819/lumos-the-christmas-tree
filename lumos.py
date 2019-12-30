@@ -23,7 +23,6 @@ deviceID = 0
 camera = cv2.VideoCapture(deviceID)
 frameWidth = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
 frameHeight = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
-# (that is: height, width,numchannels)
 wandMoveTracingFrame = np.zeros((frameHeight, frameWidth, 1), np.uint8)
 cameraFrame = np.zeros((frameHeight, frameWidth, 1), np.uint8)
 tracePoints = []
@@ -304,6 +303,8 @@ while(True):
                 if spell == 2:
                     text = "Reparo"
                     broken = False
+
+                    # reset so it can break again
                     spellCount = 0
                     breakIn = random.randint(5,15)
                     spellcaster.reparo()
